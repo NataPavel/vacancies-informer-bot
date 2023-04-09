@@ -3,12 +3,12 @@ package telegram
 import (
 	"bytes"
 	"fmt"
-	"github.com/spf13/viper"
 	"log"
 	"net/http"
 	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/spf13/viper"
 )
 
 func SendMessage(text string) {
@@ -60,8 +60,8 @@ func SendMessage(text string) {
 
 	txt := bytes.NewReader(data)
 	req := fmt.Sprintf("%s%s/sendMessage", TelegramURL, BotToken)
-	_, err = http.Post(req, "application/json", txt)
 
+	_, err = http.Post(req, "application/json", txt)
 	if err != nil {
 		log.Panic(err)
 	}
