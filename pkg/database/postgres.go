@@ -3,9 +3,13 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"log"
+	"os"
+	"vac_informer_tgbot/pkg/database/entities"
+	"vac_informer_tgbot/pkg/telegram"
+
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
-	"os"
 )
 
 type Config struct {
@@ -16,6 +20,8 @@ type Config struct {
 	Port     string
 	SSL      string
 }
+
+var vacancy *entities.VacancyInfo
 
 func connDb(cfg Config) (*sql.DB, error) {
 	cfg.Login = viper.GetString("db.login")
@@ -39,4 +45,45 @@ func connDb(cfg Config) (*sql.DB, error) {
 	}
 
 	return conn, nil
+}
+
+func searchVacancy(db *sql.DB) bool {
+	var rowHash int
+
+	db.QueryRow("SELECT id FROM vacancy_info WHERE link_hash = $1", vacancy.LinkHash).
+		Scan(&rowHash)
+	if rowHash != 0 {
+		return true
+	}
+
+	return false
+}
+
+func createVacancy(db *sql.DB) {
+	query := "INSERT INTO vacancy_info (website, vacancy_link, vacancy_text, link_hash) VALUES ($1, $2, $3, $4)"
+	_, err := db.Exec(query, vacancy.Website,
+		vacancy.VacancyLink, vacancy.VacancyText, vacancy.LinkHash)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func CheckVacancy(website, vacancyLink, vacancyText, hash string) {
+	db, err := connDb(Config{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer db.Close()
+
+	vacancy.Website = website
+	vacancy.VacancyLink = vacancyLink
+	vacancy.VacancyText = vacancyText
+	vacancy.LinkHash = hash
+
+	searchVac := searchVacancy(db)
+	if searchVac == false {
+		createVacancy(db)
+		telegram.SendMessage(vacancyText)
+	}
 }
