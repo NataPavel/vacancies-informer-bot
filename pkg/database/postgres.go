@@ -4,12 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"os"
 	"vac_informer_tgbot/pkg/database/entities"
 	"vac_informer_tgbot/pkg/telegram"
 
 	_ "github.com/lib/pq"
-	"github.com/spf13/viper"
 )
 
 type Config struct {
@@ -21,16 +19,7 @@ type Config struct {
 	SSL      string
 }
 
-var vacancy *entities.VacancyInfo
-
-func connDb(cfg Config) (*sql.DB, error) {
-	cfg.Login = viper.GetString("db.login")
-	cfg.Password = os.Getenv("DB_PASS")
-	cfg.Host = viper.GetString("db.host")
-	cfg.Port = viper.GetString("db.port")
-	cfg.SSL = viper.GetString("db.sslMode")
-	cfg.DBName = viper.GetString("db.dbName")
-
+func PostgresConnDb(cfg Config) (*sql.DB, error) {
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		cfg.Login, cfg.Password, cfg.Host, cfg.Port, cfg.DBName, cfg.SSL)
 	conn, err := sql.Open("postgres", connStr)
@@ -47,7 +36,7 @@ func connDb(cfg Config) (*sql.DB, error) {
 	return conn, nil
 }
 
-func searchVacancy(db *sql.DB) bool {
+func searchVacancy(db *sql.DB, vacancy *entities.VacancyInfo) bool {
 	var rowHash int
 
 	db.QueryRow("SELECT id FROM vacancy_info WHERE link_hash = $1", vacancy.LinkHash).
@@ -59,31 +48,32 @@ func searchVacancy(db *sql.DB) bool {
 	return false
 }
 
-func createVacancy(db *sql.DB) {
-	query := "INSERT INTO vacancy_info (website, vacancy_link, vacancy_text, link_hash) VALUES ($1, $2, $3, $4)"
+func createVacancy(db *sql.DB, vacancy *entities.VacancyInfo) {
+	query := "INSERT INTO vacancy_info (website, vacancy_link, vacancy_text, link_hash, location, company) VALUES ($1, $2, $3, $4, $5, $6)"
 	_, err := db.Exec(query, vacancy.Website,
-		vacancy.VacancyLink, vacancy.VacancyText, vacancy.LinkHash)
+		vacancy.VacancyLink, vacancy.VacancyText, vacancy.LinkHash, vacancy.Location, vacancy.Company)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func CheckVacancy(website, vacancyLink, vacancyText, hash string) {
-	db, err := connDb(Config{})
-	if err != nil {
-		log.Fatal(err)
+func ErrorLogger() {
+	//
+}
+
+func CheckVacancy(website, vacancyLink, vacancyTitle, location, company, hash, text string, db *sql.DB) {
+	vacancy := &entities.VacancyInfo{
+		Website:     website,
+		VacancyLink: vacancyLink,
+		VacancyText: vacancyTitle,
+		Location:    location,
+		Company:     company,
+		LinkHash:    hash,
 	}
 
-	defer db.Close()
-
-	vacancy.Website = website
-	vacancy.VacancyLink = vacancyLink
-	vacancy.VacancyText = vacancyText
-	vacancy.LinkHash = hash
-
-	searchVac := searchVacancy(db)
+	searchVac := searchVacancy(db, vacancy)
 	if searchVac == false {
-		createVacancy(db)
-		telegram.SendMessage(vacancyText)
+		createVacancy(db, vacancy)
+		telegram.SendMessage(text)
 	}
 }

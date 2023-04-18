@@ -37,19 +37,21 @@ func SendMessage(text string) {
 		if update.Message == nil { // ignore any non-Message Updates
 			continue
 		}
-		if update.Message != nil && update.Message.Text == "/start" { // If we got a message
-			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+		if update.Message != nil { // If we got a message
+			if update.Message.Text == "/start" || update.Message.Text == "/info" {
+				log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 
-			chatId = update.Message.Chat.ID
+				chatId = update.Message.Chat.ID
 
-			text := "Hello! Thank you for joining us!\n\n"
-			text += "At the moment, vacancies are sent only from Indeed.com\n\n"
-			text += "We plan to add such services in the future:\n"
-			text += " - Robota.ua\n - Inco.works\n - DOU.ua\n - Work.ua"
+				textMess := "Hello! Thank you for joining us!\n\n"
+				textMess += "At the moment, vacancies are sent only from Indeed.com, DOU.ua\n\n"
+				textMess += "We plan to add such services in the future:\n"
+				textMess += " - Robota.ua\n - Inco.works\n - Work.ua"
 
-			msg := tgbotapi.NewMessage(chatId, text)
+				msg := tgbotapi.NewMessage(chatId, textMess)
 
-			bot.Send(msg)
+				bot.Send(msg)
+			}
 		}
 	}
 
