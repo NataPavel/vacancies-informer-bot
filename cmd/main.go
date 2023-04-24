@@ -3,9 +3,10 @@ package main
 import (
 	"log"
 	"os"
-	"vac_informer_tgbot/pkg/database"
 
+	"vac_informer_tgbot/pkg/database"
 	"vac_informer_tgbot/pkg/services"
+	"vac_informer_tgbot/pkg/telegram"
 
 	"github.com/joho/godotenv"
 	"github.com/robfig/cron/v3"
@@ -35,12 +36,17 @@ func main() {
 	}
 	defer db.Close()
 
+	tgbot, err := telegram.NewTgBot(telegram.Config{
+		BotToken:    os.Getenv("BOT_TOKEN"),
+		TelegramUrl: viper.GetString("telegramURL"),
+	})
+
 	c := cron.New()
 	c.AddFunc("*/5 * * * *", func() {
 		searchTags := []string{"Golang", ".Net"}
 		for _, i := range searchTags {
-			services.Indeed(i, db)
-			services.Dou(i, db)
+			services.Indeed(i, db, tgbot)
+			services.Dou(i, db, tgbot)
 		}
 	})
 	c.Start()

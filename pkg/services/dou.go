@@ -10,9 +10,10 @@ import (
 	"vac_informer_tgbot/pkg/database"
 
 	"github.com/PuerkitoBio/goquery"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-func Dou(tag string, db *sql.DB) {
+func Dou(tag string, db *sql.DB, tgbot *tgbotapi.BotAPI) {
 	url := fmt.Sprintf("https://jobs.dou.ua/vacancies/?search=%s", tag)
 
 	resp, err := http.Get(url)
@@ -22,7 +23,9 @@ func Dou(tag string, db *sql.DB) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		log.Fatalf("status code error: %d %s", resp.StatusCode, resp.Status)
+		errorMessage := fmt.Sprintf("Status code error(Dou): %d %s", resp.StatusCode, resp.Status)
+		database.ErrorLogger(errorMessage, db)
+		fmt.Println(errorMessage)
 	}
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
@@ -46,9 +49,9 @@ func Dou(tag string, db *sql.DB) {
 	linkMDHash := md5.Sum([]byte(vacancyLink))
 	hash := fmt.Sprintf("%x", linkMDHash)
 
-	text := fmt.Sprintf("Dou - %s:\n%s; \n%s; \n%s; \n%s",
+	text := fmt.Sprintf("🔵Dou - %s🔵:\n• %s;\n• %s;\n• %s;\n• %s",
 		tag, vacancyTitle, company, location, vacancyLink)
 	fmt.Println(text)
 
-	database.CheckVacancy(url, vacancyLink, vacancyTitle, location, company, hash, text, db)
+	database.CheckVacancy(url, vacancyLink, vacancyTitle, location, company, hash, text, db, tgbot)
 }
