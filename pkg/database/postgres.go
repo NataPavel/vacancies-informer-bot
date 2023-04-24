@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+
 	"vac_informer_tgbot/pkg/database/entities"
 	"vac_informer_tgbot/pkg/telegram"
 
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	_ "github.com/lib/pq"
 )
 
@@ -57,11 +59,20 @@ func createVacancy(db *sql.DB, vacancy *entities.VacancyInfo) {
 	}
 }
 
-func ErrorLogger() {
-	//
+func ErrorLogger(errorMessage string, db *sql.DB) {
+	errorLog := &entities.ErrorLogger{
+		ErrorMessage: errorMessage,
+	}
+
+	query := "INSERT INTO error_log (error_message) VALUES ($1)"
+
+	_, err := db.Exec(query, errorLog.ErrorMessage)
+	if err != nil {
+		log.Fatalf("Failed to register an error: %s", err)
+	}
 }
 
-func CheckVacancy(website, vacancyLink, vacancyTitle, location, company, hash, text string, db *sql.DB) {
+func CheckVacancy(website, vacancyLink, vacancyTitle, location, company, hash, text string, db *sql.DB, tgbot *tgbotapi.BotAPI) {
 	vacancy := &entities.VacancyInfo{
 		Website:     website,
 		VacancyLink: vacancyLink,
@@ -74,6 +85,6 @@ func CheckVacancy(website, vacancyLink, vacancyTitle, location, company, hash, t
 	searchVac := searchVacancy(db, vacancy)
 	if searchVac == false {
 		createVacancy(db, vacancy)
-		telegram.SendMessage(text)
+		telegram.SendMessage(text, tgbot)
 	}
 }
