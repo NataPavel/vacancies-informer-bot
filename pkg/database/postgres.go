@@ -4,12 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-
-	"vac_informer_tgbot/pkg/database/entities"
 	"vac_informer_tgbot/pkg/telegram"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	_ "github.com/lib/pq"
+	"vac_informer_tgbot/pkg/database/entities"
 )
 
 type Config struct {
@@ -87,4 +86,5 @@ func CheckVacancy(website, vacancyLink, vacancyTitle, location, company, hash, t
 		createVacancy(db, vacancy)
 		telegram.SendMessage(text, tgbot)
 	}
+	//telegram.SendMessage(text, tgbot)
 }

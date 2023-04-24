@@ -11,6 +11,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+var activeChats = make(map[int64]bool)
+
 func SendMessage(text string, bot *tgbotapi.BotAPI) {
 	BotToken := os.Getenv("BOT_TOKEN")
 	TelegramURL := viper.GetString("telegramURL")
@@ -21,14 +23,17 @@ func SendMessage(text string, bot *tgbotapi.BotAPI) {
 		log.Panic(err)
 	}
 
-	// extract chat ID from the latest update
-	var chatIds []int64
+	var chatIds int64
 	if len(updates) > 0 {
-		chatIds = append(chatIds, updates[len(updates)-1].Message.Chat.ID)
+		chatIds = updates[len(updates)-1].Message.Chat.ID
+	}
+
+	if !activeChats[chatIds] {
+		activeChats[chatIds] = true
 	}
 
 	// send message
-	for _, chatId := range chatIds {
+	for chatId := range activeChats {
 		textConv := fmt.Sprintf("%s", text)
 		textJson := fmt.Sprintf(`{"chat_id":%d, "text":"%s", "parse_mode":"HTML", "disable_web_page_preview": false}`, chatId, textConv)
 		data := []byte(textJson)
