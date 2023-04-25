@@ -3,12 +3,11 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"log"
-	"vac_informer_tgbot/pkg/telegram"
-
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	_ "github.com/lib/pq"
+	"log"
 	"vac_informer_tgbot/pkg/database/entities"
+	"vac_informer_tgbot/pkg/telegram"
 )
 
 type Config struct {

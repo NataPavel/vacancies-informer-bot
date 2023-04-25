@@ -47,6 +47,7 @@ func main() {
 		for _, i := range searchTags {
 			services.Indeed(i, db, tgbot)
 			services.Dou(i, db, tgbot)
+			services.Jooble(i, db, tgbot)
 		}
 	})
 	c.Start()
