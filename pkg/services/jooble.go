@@ -42,7 +42,7 @@ func Jooble(tag string, db *sql.DB, tgbot *tgbotapi.BotAPI) {
 		vacancyTitle = s.Find("a").Text()
 		vacancyLink, _ = s.Find("a").Attr("href")
 		company = s.Find(".Ya0gV9").Text()
-		location = s.Find(".caption").Text()
+		location = s.Find("._2_Ab4T").Text()
 		fmt.Printf("Job %d: %s - %s - %s. %s\n", i+1, vacancyTitle, company, location, vacancyLink)
 	})
 

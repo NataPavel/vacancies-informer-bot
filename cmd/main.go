@@ -48,6 +48,7 @@ func main() {
 			services.Indeed(i, db, tgbot)
 			services.Dou(i, db, tgbot)
 			services.Jooble(i, db, tgbot)
+			services.Djinni(i, db, tgbot)
 		}
 	})
 	c.Start()
