@@ -53,5 +53,5 @@ func Dou(tag string, db *sql.DB, tgbot *tgbotapi.BotAPI) {
 		tag, vacancyTitle, company, location, vacancyLink)
 	fmt.Println(text)
 
-	database.CheckVacancy(url, vacancyLink, vacancyTitle, location, company, hash, text, db, tgbot)
+	database.CheckVacancy("DOU.ua", vacancyLink, vacancyTitle, location, company, hash, text, db, tgbot)
 }
