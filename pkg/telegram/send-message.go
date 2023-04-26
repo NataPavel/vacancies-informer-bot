@@ -16,7 +16,6 @@ var activeChats = make(map[int64]bool)
 func SendMessage(text string, bot *tgbotapi.BotAPI) {
 	BotToken := os.Getenv("BOT_TOKEN")
 	TelegramURL := viper.GetString("telegramURL")
-
 	// get latest update
 	updates, err := bot.GetUpdates(tgbotapi.NewUpdate(0))
 	if err != nil {
@@ -27,7 +26,6 @@ func SendMessage(text string, bot *tgbotapi.BotAPI) {
 	if len(updates) > 0 {
 		chatIds = updates[len(updates)-1].Message.Chat.ID
 	}
-
 	if !activeChats[chatIds] {
 		activeChats[chatIds] = true
 	}
@@ -46,5 +44,4 @@ func SendMessage(text string, bot *tgbotapi.BotAPI) {
 			log.Panic(err)
 		}
 	}
-
 }
