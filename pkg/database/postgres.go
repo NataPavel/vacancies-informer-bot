@@ -85,5 +85,5 @@ func CheckVacancy(website, vacancyLink, vacancyTitle, location, company, hash, t
 		createVacancy(db, vacancy)
 		telegram.SendMessage(text, tgbot)
 	}
-	//telegram.SendMessage(text, tgbot)
+
 }

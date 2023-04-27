@@ -9,7 +9,6 @@ import (
 	"vac_informer_tgbot/pkg/telegram"
 
 	"github.com/joho/godotenv"
-	"github.com/robfig/cron/v3"
 	"github.com/spf13/viper"
 )
 
@@ -41,19 +40,13 @@ func main() {
 		TelegramUrl: viper.GetString("telegramURL"),
 	})
 
-	c := cron.New()
-	c.AddFunc("*/5 * * * *", func() {
-		searchTags := []string{"Golang", ".Net"}
-		for _, i := range searchTags {
-			services.Indeed(i, db, tgbot)
-			services.Dou(i, db, tgbot)
-			services.Jooble(i, db, tgbot)
-			services.Djinni(i, db, tgbot)
-		}
-	})
-	c.Start()
-
-	select {}
+	searchTags := []string{"Golang", ".Net"}
+	for _, i := range searchTags {
+		services.Indeed(i, db, tgbot)
+		services.Dou(i, db, tgbot)
+		services.Jooble(i, db, tgbot)
+		services.Djinni(i, db, tgbot)
+	}
 
 }
 func initConfig() error {
