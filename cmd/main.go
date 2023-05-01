@@ -1,8 +1,12 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"vac_informer_tgbot/pkg/database"
 	"vac_informer_tgbot/pkg/services"
@@ -14,7 +18,6 @@ import (
 )
 
 func main() {
-	println("It's working")
 	if err := initConfig(); err != nil {
 		log.Fatalf("Error initializing configs: %s", err.Error())
 	}
@@ -53,9 +56,34 @@ func main() {
 	})
 	c.Start()
 
-	select {}
+	shutdownChan := make(chan os.Signal, 1)
+	signal.Notify(shutdownChan, syscall.SIGTERM, syscall.SIGINT)
 
+	go func() {
+		<-shutdownChan
+		log.Println("Received shutdown signal. Shutting down server...")
+
+		// Set a timeout of 5 seconds to allow the server to shut down gracefully
+		_, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err = c.Stop().Err(); err != nil {
+			log.Printf("Failed to stop cron: %s", err)
+		}
+
+		if err = db.Close(); err != nil {
+			log.Fatalf("Failed to close db connection: %s", err)
+		}
+
+		log.Println("Server has shut down gracefully")
+		os.Exit(0)
+	}()
+
+	log.Println("Server is up and running")
+
+	select {}
 }
+
 func initConfig() error {
 	viper.AddConfigPath("configs")
 	viper.SetConfigName("config")
