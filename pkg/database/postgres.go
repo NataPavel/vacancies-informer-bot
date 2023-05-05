@@ -3,10 +3,10 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	_ "github.com/lib/pq"
 	"log"
 	"vac_informer_tgbot/pkg/database/entities"
+	"vac_informer_tgbot/pkg/database/telegram_db_methods"
 	"vac_informer_tgbot/pkg/telegram"
 )
 
@@ -19,24 +19,30 @@ type Config struct {
 	SSL      string
 }
 
+var db *sql.DB
+
 func PostgresConnDb(cfg Config) (*sql.DB, error) {
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		cfg.Login, cfg.Password, cfg.Host, cfg.Port, cfg.DBName, cfg.SSL)
-	conn, err := sql.Open("postgres", connStr)
+
+	var err error
+	db, err = sql.Open("postgres", connStr)
 	if err != nil {
-		return nil, err
+		return db, err
 	}
 
 	//Check for connection
-	err = conn.Ping()
+	err = db.Ping()
 	if err != nil {
-		return nil, err
+		return db, err
 	}
 
-	return conn, nil
+	telegram_db_methods.GetDatabase(db)
+
+	return db, nil
 }
 
-func searchVacancy(db *sql.DB, vacancy *entities.VacancyInfo) bool {
+func searchVacancy(vacancy *entities.VacancyInfo) bool {
 	var rowHash int
 
 	db.QueryRow("SELECT id FROM vacancy_info WHERE link_hash = $1", vacancy.LinkHash).
@@ -48,7 +54,7 @@ func searchVacancy(db *sql.DB, vacancy *entities.VacancyInfo) bool {
 	return false
 }
 
-func createVacancy(db *sql.DB, vacancy *entities.VacancyInfo) {
+func createVacancy(vacancy *entities.VacancyInfo) {
 	query := "INSERT INTO vacancy_info (website, vacancy_link, vacancy_text, link_hash, location, company) VALUES ($1, $2, $3, $4, $5, $6)"
 	_, err := db.Exec(query, vacancy.Website,
 		vacancy.VacancyLink, vacancy.VacancyText, vacancy.LinkHash, vacancy.Location, vacancy.Company)
@@ -57,20 +63,7 @@ func createVacancy(db *sql.DB, vacancy *entities.VacancyInfo) {
 	}
 }
 
-func ErrorLogger(errorMessage string, db *sql.DB) {
-	errorLog := &entities.ErrorLogger{
-		ErrorMessage: errorMessage,
-	}
-
-	query := "INSERT INTO error_log (error_message) VALUES ($1)"
-
-	_, err := db.Exec(query, errorLog.ErrorMessage)
-	if err != nil {
-		log.Fatalf("Failed to register an error: %s", err)
-	}
-}
-
-func CheckVacancy(website, vacancyLink, vacancyTitle, location, company, hash, text string, db *sql.DB, tgbot *tgbotapi.BotAPI) {
+func CheckVacancy(website, vacancyLink, vacancyTitle, location, company, hash, text string) {
 	vacancy := &entities.VacancyInfo{
 		Website:     website,
 		VacancyLink: vacancyLink,
@@ -80,10 +73,9 @@ func CheckVacancy(website, vacancyLink, vacancyTitle, location, company, hash, t
 		LinkHash:    hash,
 	}
 
-	searchVac := searchVacancy(db, vacancy)
+	searchVac := searchVacancy(vacancy)
 	if searchVac == false {
-		createVacancy(db, vacancy)
-		telegram.SendMessage(text, tgbot)
+		createVacancy(vacancy)
+		telegram.SendMessage(text)
 	}
-
 }

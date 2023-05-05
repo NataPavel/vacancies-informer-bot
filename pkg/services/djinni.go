@@ -2,19 +2,18 @@ package services
 
 import (
 	"crypto/md5"
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
 
 	"vac_informer_tgbot/pkg/database"
+	tg_methods "vac_informer_tgbot/pkg/database/telegram_db_methods"
 
 	"github.com/PuerkitoBio/goquery"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-func Djinni(tag string, db *sql.DB, tgbot *tgbotapi.BotAPI) {
+func Djinni(tag string) {
 	url := fmt.Sprintf("https://djinni.co/jobs/?keywords=%s&all-keywords=&any-of-keywords=&exclude-keywords=", tag)
 
 	resp, err := http.Get(url)
@@ -25,7 +24,7 @@ func Djinni(tag string, db *sql.DB, tgbot *tgbotapi.BotAPI) {
 
 	if resp.StatusCode != 200 {
 		errorMessage := fmt.Sprintf("Status code error(Djinni): %d %s", resp.StatusCode, resp.Status)
-		database.ErrorLogger(errorMessage, db)
+		tg_methods.ErrorLogger(errorMessage)
 		fmt.Println(errorMessage)
 	}
 
@@ -58,5 +57,5 @@ func Djinni(tag string, db *sql.DB, tgbot *tgbotapi.BotAPI) {
 		tag, vacancyTitle, company, location, vacancyLink)
 	fmt.Println(text)
 
-	database.CheckVacancy("Djinni.co", vacancyLink, vacancyTitle, location, company, hash, text, db, tgbot)
+	database.CheckVacancy("Djinni.co", vacancyLink, vacancyTitle, location, company, hash, text)
 }

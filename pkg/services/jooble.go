@@ -2,18 +2,17 @@ package services
 
 import (
 	"crypto/md5"
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 
 	"vac_informer_tgbot/pkg/database"
+	tg_methods "vac_informer_tgbot/pkg/database/telegram_db_methods"
 
 	"github.com/PuerkitoBio/goquery"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-func Jooble(tag string, db *sql.DB, tgbot *tgbotapi.BotAPI) {
+func Jooble(tag string) {
 	url := fmt.Sprintf("https://ua.jooble.org/SearchResult?ukw=%s", tag)
 
 	resp, err := http.Get(url)
@@ -24,7 +23,8 @@ func Jooble(tag string, db *sql.DB, tgbot *tgbotapi.BotAPI) {
 
 	if resp.StatusCode != 200 {
 		errorMessage := fmt.Sprintf("Status code error(Jooble): %d %s", resp.StatusCode, resp.Status)
-		database.ErrorLogger(errorMessage, db)
+		//database.ErrorLogger(errorMessage)
+		tg_methods.ErrorLogger(errorMessage)
 		fmt.Println(errorMessage)
 	}
 
@@ -53,5 +53,5 @@ func Jooble(tag string, db *sql.DB, tgbot *tgbotapi.BotAPI) {
 		tag, vacancyTitle, company, location, vacancyLink)
 	fmt.Println(text)
 
-	database.CheckVacancy("Jooble.org", vacancyLink, vacancyTitle, location, company, hash, text, db, tgbot)
+	database.CheckVacancy("Jooble.org", vacancyLink, vacancyTitle, location, company, hash, text)
 }

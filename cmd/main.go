@@ -48,10 +48,10 @@ func main() {
 	c.AddFunc("*/5 * * * *", func() {
 		searchTags := []string{"Golang", ".Net"}
 		for _, i := range searchTags {
-			services.Indeed(i, db, tgbot)
-			services.Dou(i, db, tgbot)
-			services.Jooble(i, db, tgbot)
-			services.Djinni(i, db, tgbot)
+			services.Indeed(i)
+			services.Dou(i)
+			services.Jooble(i)
+			services.Djinni(i)
 		}
 	})
 	c.Start()
@@ -74,6 +74,8 @@ func main() {
 		if err = db.Close(); err != nil {
 			log.Fatalf("Failed to close db connection: %s", err)
 		}
+
+		tgbot.StopReceivingUpdates()
 
 		log.Println("Server has shut down gracefully")
 		os.Exit(0)
