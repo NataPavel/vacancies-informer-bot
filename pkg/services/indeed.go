@@ -2,7 +2,6 @@ package services
 
 import (
 	"crypto/md5"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -10,8 +9,7 @@ import (
 	"os"
 
 	"vac_informer_tgbot/pkg/database"
-
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tg_methods "vac_informer_tgbot/pkg/database/telegram_db_methods"
 )
 
 type SearchResult struct {
@@ -30,7 +28,7 @@ type SearchResult struct {
 	} `json:"results"`
 }
 
-func Indeed(tag string, db *sql.DB, tgbot *tgbotapi.BotAPI) {
+func Indeed(tag string) {
 	apiKey := os.Getenv("Indeed_Access_Token")
 
 	// use the API key to make a search request
@@ -42,7 +40,7 @@ func Indeed(tag string, db *sql.DB, tgbot *tgbotapi.BotAPI) {
 
 	if resp.StatusCode != 200 {
 		errorMessage := fmt.Sprintf("Status code error(Indeed): %d %s", resp.StatusCode, resp.Status)
-		database.ErrorLogger(errorMessage, db)
+		tg_methods.ErrorLogger(errorMessage)
 		fmt.Println(errorMessage)
 	}
 	defer resp.Body.Close()
@@ -80,5 +78,5 @@ func Indeed(tag string, db *sql.DB, tgbot *tgbotapi.BotAPI) {
 		tag, vacancyTitle, company, location, vacancyLink)
 	fmt.Println(text)
 
-	database.CheckVacancy("Indeed.com", vacancyLink, vacancyTitle, location, company, hash, text, db, tgbot)
+	database.CheckVacancy("Indeed.com", vacancyLink, vacancyTitle, location, company, hash, text)
 }
